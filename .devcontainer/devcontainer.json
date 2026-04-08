@@ -1,0 +1,8 @@
+{
+    "name": "AI Dev Container",
+    "image": "carlostessier/ceiabd:pythonbase_latest",   
+    "settings": {
+      "python.defaultInterpreterPath": "/usr/local/bin/python"
+    },
+    "postCreateCommand": "pip install -r requirements.txt"
+  }  

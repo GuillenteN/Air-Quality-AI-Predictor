@@ -1,0 +1,10 @@
+{
+  // Lista de extensiones recomendadas para trabajar con el módulo.
+  "recommendations": [
+    "ms-python.python",
+    "ms-toolsai.jupyter",
+    "ms-python.vscode-pylance",
+    "ms-azuretools.vscode-docker",
+    "ms-python.black-formatter"
+  ]
+}
