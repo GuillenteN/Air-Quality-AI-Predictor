@@ -1,5 +1,4 @@
 {
-  // Configuración por defecto para el entorno de desarrollo del módulo.
   "python.formatting.provider": "black",
   "python.formatting.blackArgs": [
     "--line-length",
@@ -9,9 +8,8 @@
   "editor.codeActionsOnSave": {
     "source.organizeImports": "explicit"
   },
-  // Crea automáticamente un entorno Jupyter integrado con el intérprete
-  // del contenedor. Permite iniciar kernels y ejecutar notebooks sin
-  // configuración adicional.
+  // Automatically creates an integrated Jupyter environment with the container's interpreter.
+  // Allows you to start kernels and run notebooks without additional configuration.
   "jupyter.jupyterServerType": "local",
   "jupyter.interactiveWindow.creationMode": "perFile"
 }

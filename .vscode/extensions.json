@@ -1,5 +1,4 @@
 {
-  // Lista de extensiones recomendadas para trabajar con el módulo.
   "recommendations": [
     "ms-python.python",
     "ms-toolsai.jupyter",
