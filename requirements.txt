@@ -18,3 +18,8 @@ openpyxl
 torch
 transformers
 sentencepiece
+fastapi
+streamlit
+folium
+optuna
+keras-tuner
