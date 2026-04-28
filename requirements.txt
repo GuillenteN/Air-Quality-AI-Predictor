@@ -1,12 +1,12 @@
 numpy
 pandas
 matplotlib
-scikit-learn
+scikit-learn==1.5.2
 tensorflow
 keras
 seaborn
-shap
-xgboost
+shap==0.46.0
+xgboost==2.1.4
 lightgbm
 bokeh
 scipy
@@ -23,3 +23,6 @@ streamlit
 folium
 optuna
 keras-tuner
+joblib
+uvicorn
+requests
