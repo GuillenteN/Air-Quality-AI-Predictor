@@ -1,8 +1,8 @@
 from pathlib import Path
 
 import folium
-import joblib
 import pandas as pd
+import requests
 import streamlit as st
 from streamlit_folium import st_folium
 
@@ -17,9 +17,7 @@ st.set_page_config(
 BASE_DIR = Path(__file__).resolve().parents[2]
 DATA_PATH = BASE_DIR / "data" / "processed" / "air_weather_features.csv"
 
-MODEL_PATH = BASE_DIR / "models" / "xgb_future_model.pkl"
-SCALER_PATH = BASE_DIR / "models" / "future_scaler.pkl"
-FEATURES_PATH = BASE_DIR / "models" / "future_features.pkl"
+API_URL = "http://localhost:8006/predict"
 
 
 @st.cache_data
@@ -28,18 +26,6 @@ def load_data():
     df["time"] = pd.to_datetime(df["time"])
     df = df.sort_values(["station", "time"]).reset_index(drop=True)
     return df
-
-
-@st.cache_resource
-def load_model():
-    if not MODEL_PATH.exists() or not SCALER_PATH.exists() or not FEATURES_PATH.exists():
-        return None, None, None
-
-    model = joblib.load(MODEL_PATH)
-    scaler = joblib.load(SCALER_PATH)
-    features = joblib.load(FEATURES_PATH)
-
-    return model, scaler, features
 
 
 def get_aqi_color(aqi):
@@ -59,10 +45,11 @@ def get_aqi_message(aqi):
 
 
 df = load_data()
-model, scaler, features = load_model()
 
 st.title("🌍 Predicción de Calidad del Aire Urbano")
-st.write("Dashboard interactivo para visualizar y predecir el AQI futuro por estación.")
+st.write(
+    "Dashboard interactivo conectado a FastAPI para visualizar datos y predecir el AQI futuro por estación."
+)
 
 st.sidebar.header("Filtros")
 
@@ -89,35 +76,68 @@ elif latest["aqi"] <= 100:
 else:
     st.error(get_aqi_message(latest["aqi"]))
 
-st.subheader("🔮 Predicción futura del AQI")
 
-if model is None:
-    st.info(
-        "No se encontró el modelo futuro. "
-        "Primero guarda `xgb_future_model.pkl`, `future_scaler.pkl` y `future_features.pkl`."
-    )
-else:
-    X_input = latest[features].to_frame().T
-    X_input_scaled = scaler.transform(X_input)
+st.subheader("🔮 Predicción futura del AQI vía FastAPI")
 
-    predicted_aqi = model.predict(X_input_scaled)[0]
+st.write(
+    "La predicción se obtiene llamando al endpoint `/predict` de la API FastAPI."
+)
+
+if "api_prediction" not in st.session_state:
+    st.session_state.api_prediction = None
+
+if st.button("Predecir AQI futuro"):
+    try:
+        response = requests.post(
+            API_URL,
+            json={"station": selected_station},
+            timeout=10,
+        )
+
+        if response.status_code == 200:
+            st.session_state.api_prediction = response.json()
+        else:
+            st.error(f"Error en la API: {response.status_code}")
+            st.write(response.text)
+
+    except requests.exceptions.ConnectionError:
+        st.error(
+            "No se pudo conectar con la API. "
+            "Asegúrate de ejecutar FastAPI en el puerto 8000."
+        )
+
+    except Exception as e:
+        st.error(f"Error inesperado: {e}")
+
+if st.session_state.api_prediction is not None:
+    data = st.session_state.api_prediction
 
     col_a, col_b = st.columns(2)
 
-    col_a.metric("AQI actual", round(latest["aqi"], 2))
-    col_b.metric("AQI predicho próxima hora", round(predicted_aqi, 2))
+    col_a.metric("AQI actual", data["current_aqi"])
+    col_b.metric(
+        "AQI predicho próxima hora",
+        data["predicted_aqi_next_hour"],
+    )
 
-    if predicted_aqi <= 50:
-        st.success(f"Predicción: {get_aqi_message(predicted_aqi)}")
-    elif predicted_aqi <= 100:
-        st.warning(f"Predicción: {get_aqi_message(predicted_aqi)}")
+    alert = data["alert"]
+
+    if alert["level"] == "buena":
+        st.success(alert["message"])
+    elif alert["level"] == "moderada":
+        st.warning(alert["message"])
     else:
-        st.error(f"Predicción: {get_aqi_message(predicted_aqi)}")
+        st.error(alert["message"])
+
+    with st.expander("Ver respuesta completa de la API"):
+        st.json(data)
 
 st.subheader(f"📈 Evolución temporal del AQI - {selected_station}")
 st.line_chart(df_station.set_index("time")[["aqi"]])
 
-st.subheader(f"🌫️ Evolución temporal de {selected_pollutant.upper()} - {selected_station}")
+st.subheader(
+    f"🌫️ Evolución temporal de {selected_pollutant.upper()} - {selected_station}"
+)
 st.line_chart(df_station.set_index("time")[[selected_pollutant]])
 
 st.subheader("📊 Comparativa AQI entre estaciones")
