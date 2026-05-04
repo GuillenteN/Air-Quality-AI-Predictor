@@ -17,7 +17,7 @@ st.set_page_config(
 BASE_DIR = Path(__file__).resolve().parents[2]
 DATA_PATH = BASE_DIR / "data" / "processed" / "air_weather_features.csv"
 
-API_URL = "http://localhost:8006/predict"
+API_URL = "http://localhost:8000/predict"
 
 
 @st.cache_data
